@@ -1,0 +1,18 @@
+# Dependabot: abre PRs mensais com atualizações de dependências (agrupadas para não lotar de PR).
+# O mobile fica de fora: as versões do Expo precisam bater com o SDK (use `npx expo install --fix`).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /backend
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    groups:
+      minor-e-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

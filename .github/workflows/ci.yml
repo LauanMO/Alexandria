@@ -1,0 +1,64 @@
+# CI do Alexandria: testes e teste de fumaça da API (modo local, sem PostgreSQL)
+# e lint, tipos e testes do app mobile, a cada push e pull request na main e na dev.
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (Node.js + Express)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DB_MODE: local
+      PORT: 3000
+      JWT_SECRET: segredo-so-para-o-ci
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - name: Testes (node --test)
+        run: npm test
+      - name: Smoke test (sobe a API e chama /)
+        run: |
+          npm start &
+          curl --retry 15 --retry-connrefused --retry-delay 1 -fsS http://localhost:3000/
+
+  mobile:
+    name: Mobile (React Native + Expo)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci
+      - name: Lint (expo lint)
+        run: npm run lint
+      - name: Checagem de tipos
+        run: npm run typecheck
+      - name: Testes (node --test)
+        run: npm test
