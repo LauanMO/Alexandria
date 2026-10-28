@@ -58,9 +58,9 @@ jobs:
       - run: npm ci
       # A formatação do Prettier fica de fora: telas antigas do time ainda não
       # passam por ela, e reformatar no fork criaria conflito com o repositório original.
-      - name: Lint (ESLint, sem regra de formatação)
+      - name: Lint (expo lint, sem regra de formatação)
         run: |
-          npx eslint . --rule "prettier/prettier: off"
+          npx expo lint -- --rule "prettier/prettier: off"
       - name: Checagem de tipos
         run: npm run typecheck
       - name: Testes (node --test)
