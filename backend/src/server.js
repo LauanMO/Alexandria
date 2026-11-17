@@ -3,6 +3,7 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 const authRoutes = require('./routes/auth');
 const bookRoutes = require('./routes/books');
 const avaliacaoRoutes = require('./routes/avaliacoes');
@@ -16,6 +17,10 @@ const mailer = require('./services/mailer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// No Railway a API fica atrás de um proxy: sem isto, o IP de todo mundo seria
+// o do proxy e todos os usuários dividiriam o mesmo limite de requisições.
+app.set('trust proxy', 1);
 
 // ==========================================
 // MIDDLEWARES GLOBAIS
@@ -47,6 +52,15 @@ app.get('/', (req, res) => {
     storage: users.mode,
   });
 });
+
+// Limite por IP no resto da API (o health check do Railway fica de fora)
+app.use(
+  rateLimit({
+    windowMs: 60 * 1000,
+    limit: 120,
+    message: { error: 'Muitas requisições. Tente de novo em instantes.' },
+  }),
+);
 
 // Rotas de autenticação
 app.use('/api/auth', authRoutes);
